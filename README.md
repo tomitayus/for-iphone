@@ -20,32 +20,42 @@
 
 ## セットアップ
 
+### ワンコマンドセットアップ（推奨）
+
+```bash
+bash setup.sh
+```
+
+### 手動セットアップ
+
 ```bash
 # 1. 依存パッケージのインストール
-pip install -r requirements.txt
+pip3 install --user -r requirements.txt
 
-# 2. 環境変数の設定
+# 2. 環境変数の設定（.env.example をコピー）
 cp .env.example .env
-# .env を編集してAPIキーを設定
+
+# 3. APIキーを設定（エディタで開いて編集）
+nano .env
 ```
 
 ## 使い方
 
 ```bash
 # 単一の質問
-python main.py "量子コンピューティングの現状と将来は？"
+python3 main.py "量子コンピューティングの現状と将来は？"
 
 # バッチモード（ファイルから複数質問）
-python main.py --file questions.txt
+python3 main.py --file questions.txt
 
 # インタラクティブモード
-python main.py --interactive
+python3 main.py --interactive
 
 # 通知なし
-python main.py "質問" --no-notify
+python3 main.py "質問" --no-notify
 
 # 出力先指定
-python main.py "質問" --output ./my_diagram.html
+python3 main.py "質問" --output ./my_diagram.html
 ```
 
 ## 必要なAPIキー
@@ -85,6 +95,7 @@ for-iphone/
 │   └── notifier.py          # Email/Webhook/iOS通知
 ├── templates/
 │   └── diagram.html         # HTMLテンプレート
+├── setup.sh                 # ワンコマンドセットアップ
 ├── .env.example             # 環境変数テンプレート
 ├── requirements.txt         # Python依存パッケージ
 ├── ios_shortcut_guide.md    # iOS連携ガイド
