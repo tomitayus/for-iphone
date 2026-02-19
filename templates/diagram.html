@@ -273,7 +273,7 @@
         <span><span class="dot dot-{{ r.provider|lower }}"></span>{{ r.provider }}</span>
         <span class="time">{{ "%.1f"|format(r.elapsed_sec) }}s</span>
       </h3>
-      <div class="content">{{ r.content if r.content else "(Error: " + r.error + ")" }}</div>
+      <div class="content">{{ (r.content if r.content else "(Error: " + r.error + ")") }}</div>
     </div>
     {% endfor %}
   </div>
@@ -285,8 +285,8 @@
 
 <script>
 // Build diagram from embedded data
-const nodes = {{ diagram_nodes_json }};
-const edges = {{ diagram_edges_json }};
+const nodes = {{ diagram_nodes_json|safe }};
+const edges = {{ diagram_edges_json|safe }};
 
 const svg = document.getElementById('mainDiagram');
 const width = svg.clientWidth || 800;

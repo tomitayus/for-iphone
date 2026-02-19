@@ -14,7 +14,7 @@ import httpx
 
 try:
     import google.generativeai as genai
-except ImportError:
+except BaseException:
     genai = None
 
 
