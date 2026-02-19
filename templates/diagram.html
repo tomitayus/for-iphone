@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Multi-AI Diagram: {{ title }}</title>
+<style>
+  :root {
+    --claude: #d97706;
+    --chatgpt: #10a37f;
+    --gemini: #4285f4;
+    --grok: #1d9bf0;
+    --consensus: #22c55e;
+    --difference: #ef4444;
+    --unique: #8b5cf6;
+    --bg: #0f172a;
+    --card: #1e293b;
+    --text: #e2e8f0;
+    --border: #334155;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  h1 {
+    font-size: 1.4rem;
+    text-align: center;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 20px;
+  }
+  .meta {
+    text-align: center;
+    font-size: 0.8rem;
+    color: #94a3b8;
+    margin-bottom: 24px;
+  }
+  .question-box {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 24px;
+  }
+  .question-box h2 { font-size: 0.9rem; color: #94a3b8; margin-bottom: 8px; }
+  .question-box p { font-size: 1.1rem; }
+
+  /* Summary */
+  .summary {
+    background: linear-gradient(135deg, #1e293b, #0f172a);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 24px;
+  }
+  .summary h2 { font-size: 1rem; margin-bottom: 10px; color: var(--consensus); }
+
+  /* Diagram */
+  #diagram-container {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 24px;
+    min-height: 400px;
+    position: relative;
+  }
+  #diagram-container h2 {
+    font-size: 1rem;
+    margin-bottom: 16px;
+    text-align: center;
+  }
+  svg.diagram {
+    width: 100%;
+    height: 450px;
+  }
+  svg.diagram .node-consensus { fill: var(--consensus); }
+  svg.diagram .node-difference { fill: var(--difference); }
+  svg.diagram .node-unique { fill: var(--unique); }
+  svg.diagram text { fill: var(--text); font-size: 11px; }
+  svg.diagram .edge { stroke: #475569; stroke-width: 1.5; fill: none; marker-end: url(#arrow); }
+  svg.diagram .edge-label { fill: #94a3b8; font-size: 9px; }
+
+  /* Sections */
+  .section {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+  .section h2 {
+    font-size: 1rem;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 9999px;
+    font-size: 0.7rem;
+    font-weight: 600;
+  }
+  .badge-consensus { background: var(--consensus); color: #000; }
+  .badge-difference { background: var(--difference); color: #fff; }
+  .badge-unique { background: var(--unique); color: #fff; }
+
+  ul { padding-left: 20px; }
+  li { margin-bottom: 6px; }
+
+  /* Difference table */
+  .diff-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 8px;
+    font-size: 0.85rem;
+  }
+  .diff-table th, .diff-table td {
+    border: 1px solid var(--border);
+    padding: 8px 10px;
+    text-align: left;
+  }
+  .diff-table th { background: #0f172a; font-weight: 600; }
+  .diff-table td { vertical-align: top; }
+
+  /* AI cards */
+  .ai-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .ai-card {
+    border-radius: 12px;
+    padding: 16px;
+    border: 1px solid var(--border);
+    background: var(--card);
+  }
+  .ai-card h3 {
+    font-size: 0.9rem;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .ai-card .dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 6px;
+  }
+  .dot-claude { background: var(--claude); }
+  .dot-chatgpt { background: var(--chatgpt); }
+  .dot-gemini { background: var(--gemini); }
+  .dot-grok { background: var(--grok); }
+  .ai-card .time { font-size: 0.75rem; color: #94a3b8; }
+  .ai-card .content {
+    font-size: 0.85rem;
+    max-height: 200px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+  }
+  .reliability {
+    background: #1a1a2e;
+    border-left: 3px solid #f59e0b;
+    padding: 12px 16px;
+    border-radius: 0 8px 8px 0;
+    margin-bottom: 24px;
+    font-size: 0.85rem;
+  }
+  .reliability h2 { font-size: 0.9rem; color: #f59e0b; margin-bottom: 6px; }
+
+  footer {
+    text-align: center;
+    font-size: 0.75rem;
+    color: #475569;
+    padding: 20px 0;
+    border-top: 1px solid var(--border);
+  }
+
+  /* Collapsible */
+  details summary {
+    cursor: pointer;
+    font-weight: 600;
+    padding: 8px 0;
+  }
+</style>
+</head>
+<body>
+
+<h1>Multi-AI Analysis Diagram</h1>
+<p class="meta">Generated: {{ timestamp }}</p>
+
+<div class="question-box">
+  <h2>Question</h2>
+  <p>{{ question }}</p>
+</div>
+
+<div class="summary">
+  <h2>Integrated Summary</h2>
+  <p>{{ synthesis.summary }}</p>
+</div>
+
+<div id="diagram-container">
+  <h2>Relationship Diagram</h2>
+  <svg class="diagram" id="mainDiagram">
+    <defs>
+      <marker id="arrow" viewBox="0 0 10 10" refX="10" refY="5"
+              markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+        <path d="M 0 0 L 10 5 L 0 10 z" fill="#475569"/>
+      </marker>
+    </defs>
+  </svg>
+</div>
+
+<!-- Consensus -->
+<div class="section">
+  <h2><span class="badge badge-consensus">Consensus</span> Points of Agreement</h2>
+  <ul>
+    {% for item in synthesis.consensus %}
+    <li>{{ item }}</li>
+    {% endfor %}
+  </ul>
+</div>
+
+<!-- Differences -->
+<div class="section">
+  <h2><span class="badge badge-difference">Differences</span> Points of Divergence</h2>
+  {% for diff in synthesis.differences %}
+  <details>
+    <summary>{{ diff.topic }}</summary>
+    <table class="diff-table">
+      <tr><th>Claude</th><td>{{ diff.details.Claude }}</td></tr>
+      <tr><th>ChatGPT</th><td>{{ diff.details.ChatGPT }}</td></tr>
+      <tr><th>Gemini</th><td>{{ diff.details.Gemini }}</td></tr>
+      <tr><th>Grok</th><td>{{ diff.details.Grok }}</td></tr>
+    </table>
+  </details>
+  {% endfor %}
+</div>
+
+<!-- Unique Insights -->
+<div class="section">
+  <h2><span class="badge badge-unique">Unique</span> Unique Insights</h2>
+  <ul>
+    {% for u in synthesis.unique_insights %}
+    <li><strong>{{ u.provider }}:</strong> {{ u.insight }}</li>
+    {% endfor %}
+  </ul>
+</div>
+
+<!-- Reliability -->
+<div class="reliability">
+  <h2>Reliability Notes</h2>
+  <p>{{ synthesis.reliability_notes }}</p>
+</div>
+
+<!-- Individual Responses (collapsible) -->
+<div class="section">
+  <h2>Individual AI Responses</h2>
+  <div class="ai-cards">
+    {% for r in responses %}
+    <div class="ai-card">
+      <h3>
+        <span><span class="dot dot-{{ r.provider|lower }}"></span>{{ r.provider }}</span>
+        <span class="time">{{ "%.1f"|format(r.elapsed_sec) }}s</span>
+      </h3>
+      <div class="content">{{ r.content if r.content else "(Error: " + r.error + ")" }}</div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<footer>
+  Multi-AI Diagram Automation &mdash; Powered by Claude, ChatGPT, Gemini, Grok
+</footer>
+
+<script>
+// Build diagram from embedded data
+const nodes = {{ diagram_nodes_json }};
+const edges = {{ diagram_edges_json }};
+
+const svg = document.getElementById('mainDiagram');
+const width = svg.clientWidth || 800;
+const height = 450;
+const padding = 60;
+
+// Layout: arrange nodes in a force-like grid
+const cols = Math.ceil(Math.sqrt(nodes.length));
+const cellW = (width - padding * 2) / Math.max(cols, 1);
+const cellH = (height - padding * 2) / Math.max(Math.ceil(nodes.length / cols), 1);
+
+const positions = {};
+nodes.forEach((n, i) => {
+  const col = i % cols;
+  const row = Math.floor(i / cols);
+  positions[n.id] = {
+    x: padding + col * cellW + cellW / 2,
+    y: padding + row * cellH + cellH / 2,
+  };
+});
+
+// Draw edges
+edges.forEach(e => {
+  const from = positions[e.from];
+  const to = positions[e.to];
+  if (!from || !to) return;
+
+  const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+  line.setAttribute('x1', from.x);
+  line.setAttribute('y1', from.y);
+  line.setAttribute('x2', to.x);
+  line.setAttribute('y2', to.y);
+  line.setAttribute('class', 'edge');
+  svg.appendChild(line);
+
+  if (e.label) {
+    const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    txt.setAttribute('x', (from.x + to.x) / 2);
+    txt.setAttribute('y', (from.y + to.y) / 2 - 6);
+    txt.setAttribute('text-anchor', 'middle');
+    txt.setAttribute('class', 'edge-label');
+    txt.textContent = e.label;
+    svg.appendChild(txt);
+  }
+});
+
+// Draw nodes
+nodes.forEach(n => {
+  const pos = positions[n.id];
+  const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+
+  const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+  const boxW = 120, boxH = 50;
+  rect.setAttribute('x', pos.x - boxW / 2);
+  rect.setAttribute('y', pos.y - boxH / 2);
+  rect.setAttribute('width', boxW);
+  rect.setAttribute('height', boxH);
+  rect.setAttribute('rx', 8);
+  rect.setAttribute('class', 'node-' + n.category);
+  rect.setAttribute('opacity', '0.85');
+  g.appendChild(rect);
+
+  const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+  label.setAttribute('x', pos.x);
+  label.setAttribute('y', pos.y - 4);
+  label.setAttribute('text-anchor', 'middle');
+  label.setAttribute('font-weight', 'bold');
+  label.textContent = n.label;
+  g.appendChild(label);
+
+  const desc = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+  desc.setAttribute('x', pos.x);
+  desc.setAttribute('y', pos.y + 12);
+  desc.setAttribute('text-anchor', 'middle');
+  desc.setAttribute('font-size', '9');
+  desc.textContent = n.description.length > 25 ? n.description.slice(0, 22) + '...' : n.description;
+  g.appendChild(desc);
+
+  // Tooltip on hover
+  const title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+  title.textContent = n.description;
+  g.appendChild(title);
+
+  svg.appendChild(g);
+});
+</script>
+</body>
+</html>
