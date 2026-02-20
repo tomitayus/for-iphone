@@ -44,14 +44,14 @@ async def process_question(question: str, output_path: str | None = None, notify
         status = f"OK ({r.elapsed_sec:.1f}s)" if not r.error else f"ERROR: {r.error}"
         print(f"  {r.provider}: {status}")
 
-    # Step 2: Synthesize responses
-    print("\n[2/4] Synthesizing responses with Claude...")
-    synthesis = await synthesize(result)
-    print(f"  Summary: {synthesis.get('summary', 'N/A')[:100]}...")
+    # Step 2+3: Generate HTML diagram directly with Claude Opus 4.6
+    print("\n[2/4] Generating diagram with Claude Opus 4.6...")
+    html_content = await synthesize(result)
+    print(f"  HTML generated ({len(html_content):,} chars)")
 
-    # Step 3: Render HTML diagram
-    print("\n[3/4] Generating HTML diagram...")
-    html_path = render_html(result, synthesis, output_path)
+    # Step 3: Save HTML to file
+    print("\n[3/4] Saving HTML diagram...")
+    html_path = render_html(result, html_content, output_path)
     abs_path = os.path.abspath(html_path)
     print(f"  Saved to: {abs_path}")
 
@@ -68,13 +68,15 @@ async def process_question(question: str, output_path: str | None = None, notify
         notify_result = await notify_all(
             subject=question[:60],
             html_url=html_url,
-            summary=synthesis.get("summary", ""),
+            summary=f"4つのAIによる図解分析: {question[:100]}",
         )
 
         if notify_result.get("email"):
             print("  Email: sent")
         if notify_result.get("webhook"):
             print("  Webhook: sent")
+        if notify_result.get("reminder"):
+            print("  Reminder: added")
     else:
         print("\n[4/4] Notifications skipped.")
 
@@ -125,10 +127,16 @@ def main():
     parser.add_argument("--interactive", "-i", action="store_true", help="Interactive mode")
     parser.add_argument("--output", "-o", help="Output HTML file path")
     parser.add_argument("--no-notify", action="store_true", help="Skip notifications")
+    parser.add_argument("--server", action="store_true", help="Start Web API server")
+    parser.add_argument("--host", default="127.0.0.1", help="Server bind host")
+    parser.add_argument("--port", type=int, default=8000, help="Server bind port")
 
     args = parser.parse_args()
 
-    if args.interactive:
+    if args.server:
+        from server import start_server
+        start_server(args.host, args.port)
+    elif args.interactive:
         asyncio.run(interactive_mode())
     elif args.file:
         asyncio.run(batch_mode(args.file))

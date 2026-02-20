@@ -56,6 +56,11 @@ python3 main.py "質問" --no-notify
 
 # 出力先指定
 python3 main.py "質問" --output ./my_diagram.html
+
+# Web APIサーバー（iPhoneからアクセス可能）
+python3 server.py --host 0.0.0.0 --port 8000
+# または
+python3 main.py --server --host 0.0.0.0 --port 8000
 ```
 
 ## 必要なAPIキー
@@ -88,10 +93,11 @@ python3 main.py "質問" --output ./my_diagram.html
 ```
 for-iphone/
 ├── main.py                  # エントリーポイント・CLI
+├── server.py                # Web APIサーバー（FastAPI）
 ├── src/
 │   ├── ai_clients.py        # 4つのAI API並列呼び出し
 │   ├── synthesizer.py       # Claude による回答統合
-│   ├── renderer.py          # HTML図解生成（Jinja2）
+│   ├── renderer.py          # HTML図解生成
 │   └── notifier.py          # Email/Webhook/iOS通知
 ├── templates/
 │   └── diagram.html         # HTMLテンプレート
