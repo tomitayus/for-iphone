@@ -153,3 +153,25 @@ PUBLIC_BASE_URL=https://username.github.io/for-iphone/
 ```
 OUTPUT_DIR=~/Library/Mobile Documents/com~apple~CloudDocs/AI-Diagrams/
 ```
+
+---
+
+## 方法6: Voice Log Toggle（アクションボタン音声メモ）
+
+アクションボタン1回で録音開始、もう1回で停止。ポケット内で完結する音声メモ。
+詳細な設計書は [`voice_log_toggle.md`](voice_log_toggle.md) を参照。
+
+### クイックリファレンス
+
+```
+アクションボタン → Voice Log Toggle ショートカット
+  → ファイルフラグ確認 (.recording)
+    ├─ なし → 作成 → 消音ON → 強振動 → JPR開始
+    └─ あり → 削除 → 消音OFF → 弱振動×2 → JPR停止
+```
+
+### 必要なアプリ
+- [Just Press Record](https://apps.apple.com/app/just-press-record/id1033342465)
+
+### アクションボタン設定
+**設定** → **アクションボタン** → **ショートカット** → 「Voice Log Toggle」を選択
